@@ -1,25 +1,89 @@
 #ifndef SDL_HH
     #define SDL_HH
     #include <SDL2/SDL.h>
+    #include <SDL2/SDL_ttf.h>
 #endif
+
 #ifndef LUA_FUNCTION_H
     #include "../Lua-Adapter/LuaFunction.hpp"
 #endif
 
-SDL_Renderer* renderer {nullptr};
 
-int sdl_set_color(lua_State *L) {
+SDL_Renderer* renderer {nullptr};
+TTF_Font * font{nullptr};
+SDL_Color Color_foreground{0, 0, 0, 255};
+SDL_Color Color_background{255, 255, 255, 255};
+
+class Label {
+ public:
+  Label(std::string Text = "", int X = 100, int Y = 100)
+      : texture{nullptr}, box{X, Y, 0, 0}, text{Text} {}
+  ~Label() {}
+  SDL_Texture *texture;
+  SDL_Rect box;
+  std::string text;
+
+  bool create(SDL_Renderer *const renderer, TTF_Font *const font, const SDL_Color &color_text){
+    SDL_Surface *const surface{TTF_RenderUTF8_Blended(font, this->text.c_str(), color_text)};
+    if (!surface) {
+      std::cout << "Surface Error! \n";
+      return false;
+    }
+    this->texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    if (!this->texture) {
+      std::cout << "Texture Error! \n";
+      return false;
+    }
+    SDL_QueryTexture(this->texture, NULL, NULL, &this->box.w, &this->box.h);
+   return true;
+  }
+};
+
+
+static int draw_label(lua_State *L) {
+  if(!L)
+    return 1;
+  std::string text {lua_tostring(L, 1)};
+   int x1 {lua_tonumber(L, 2)};
+  int y1 {lua_tonumber(L, 3)};
+  Label l{text, x1, y1};
+  l.create(renderer, font, Color_foreground);
+  SDL_RenderCopy(renderer, l.texture, NULL, &l.box);
+  return 0;
+}
+
+static int clear_background(lua_State *L) {
+  SDL_SetRenderDrawColor(renderer, Color_background.r, Color_background.g, Color_background.b, Color_background.a);
+  SDL_RenderClear(renderer);
+  return 0;
+}
+
+int set_color(lua_State *L) {
     if(!L)
         return 1;
     const unsigned char r {(unsigned char)(lua_tointeger(L, 1))};
     const unsigned char g {(unsigned char)(lua_tointeger(L, 2))};
     const unsigned char b {(unsigned char)(lua_tointeger(L, 3))};
     const unsigned char a {(unsigned char)(lua_tointeger(L, 4))};
+    Color_foreground = SDL_Color{r, g, b, a};
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
     return 0;
 }
 
-int sdl_fill_rect(lua_State *L) {
+int set_background(lua_State *L) {
+    if(!L)
+        return 1;
+    const unsigned char r {(unsigned char)(lua_tointeger(L, 1))};
+    const unsigned char g {(unsigned char)(lua_tointeger(L, 2))};
+    const unsigned char b {(unsigned char)(lua_tointeger(L, 3))};
+    const unsigned char a {(unsigned char)(lua_tointeger(L, 4))};
+    Color_background = SDL_Color{r, g, b, a};
+    clear_background(nullptr);
+    return 0;
+}
+
+int fill_rect(lua_State *L) {
   if(!L)
     return 1;
   const SDL_Rect rect {
@@ -32,7 +96,7 @@ int sdl_fill_rect(lua_State *L) {
   return 0;
 }
 
-int sdl_draw_rect(lua_State *L) {
+int draw_rect(lua_State *L) {
   if(!L)
     return 1;
   const SDL_Rect rect {
@@ -45,9 +109,7 @@ int sdl_draw_rect(lua_State *L) {
   return 0;
 }
 
-int sdl_render(lua_State *L) {
-  if(!L)
-    return 1;
+int render(lua_State *L) {
   SDL_RenderPresent(renderer);
   return 0;
 }
@@ -71,10 +133,13 @@ int main( ){
 
     LuaAdapter lua;
     LuaFunction function{lua};
-    if( (function.Push(sdl_fill_rect, "sdl_fill_rect") == false)
-    or  (function.Push(sdl_draw_rect, "sdl_draw_rect") == false)
-    or  (function.Push(sdl_set_color, "sdl_set_color") == false)
-    or  (function.Push(sdl_render, "sdl_render") == false)
+    if( (function.Push(fill_rect, "fill_rect") == false)
+    or  (function.Push(draw_rect, "draw_rect") == false)
+    or  (function.Push(set_color, "set_color") == false)
+    or  (function.Push(set_background, "set_background") == false)
+    or  (function.Push(draw_label, "draw_label") == false)
+    or  (function.Push(clear_background, "clear_background") == false)
+    or  (function.Push(render, "render") == false)
     or  (function.Push(delay, "delay") == false)
     )   {
         std::cout << "Error: Could not push C-Functions to Lua!";
