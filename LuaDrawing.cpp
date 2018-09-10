@@ -1,7 +1,15 @@
 #ifndef SDL_HH
     #define SDL_HH
     #include <SDL2/SDL.h>
+#endif
+
+//#define TTF_SUPPORT
+
+#ifdef TTF_SUPPORT
+  #ifndef SDL_TTF_HH
+    #define SDL_TTF_HH
     #include <SDL2/SDL_ttf.h>
+ #endif
 #endif
 
 #ifndef LUA_FUNCTION_H
@@ -10,10 +18,11 @@
 
 
 SDL_Renderer* renderer {nullptr};
-TTF_Font * font{nullptr};
 SDL_Color Color_foreground{0, 0, 0, 255};
 SDL_Color Color_background{255, 255, 255, 255};
 
+#ifdef TTF_SUPPORT
+TTF_Font * font{nullptr};
 class Label {
  public:
   Label(std::string Text = "", int X = 100, int Y = 100)
@@ -40,7 +49,6 @@ class Label {
   }
 };
 
-
 static int draw_label(lua_State *L) {
   if(!L)
     return 1;
@@ -52,6 +60,7 @@ static int draw_label(lua_State *L) {
   SDL_RenderCopy(renderer, l.texture, NULL, &l.box);
   return 0;
 }
+#endif
 
 static int clear_background(lua_State *L) {
   SDL_SetRenderDrawColor(renderer, Color_background.r, Color_background.g, Color_background.b, Color_background.a);
@@ -137,7 +146,9 @@ int main( ){
     or  (function.Push(draw_rect, "draw_rect") == false)
     or  (function.Push(set_color, "set_color") == false)
     or  (function.Push(set_background, "set_background") == false)
+#ifdef TTF_SUPPORT
     or  (function.Push(draw_label, "draw_label") == false)
+#endif
     or  (function.Push(clear_background, "clear_background") == false)
     or  (function.Push(render, "render") == false)
     or  (function.Push(delay, "delay") == false)

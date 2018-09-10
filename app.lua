@@ -2,6 +2,9 @@ SCREEN_BPP      = 16
 SCREEN_WIDTH    = 640
 SCREEN_HEIGHT   = 480
 
+EASING          = 7
+EASING_THRESHOLD= 1/8
+
 COLOR = {
     RED     = 1,
     BLUE    = 2,
@@ -70,64 +73,24 @@ local function actor_add_tween(actor, x, y, w, h, color)
 end
 
 local function tween_logic(actor)
-    if actor.tweens[1]==nil then
-        do return end
-    end
-    local running = false
-
-    if (actor.tweens[1].credit.x - actor.tweens[1].target.x) > actor.tweens[1].speed then
-        actor.tweens[1].credit.x = actor.tweens[1].credit.x - actor.tweens[1].speed; running = true
-    elseif (actor.tweens[1].credit.x - actor.tweens[1].target.x) < -actor.tweens[1].speed then
-        actor.tweens[1].credit.x = actor.tweens[1].credit.x + actor.tweens[1].speed; running = true
-    end
-
-    if (actor.tweens[1].credit.y - actor.tweens[1].target.y) > actor.tweens[1].speed then
-        actor.tweens[1].credit.y = actor.tweens[1].credit.y - actor.tweens[1].speed; running = true
-    elseif (actor.tweens[1].credit.y - actor.tweens[1].target.y) < -actor.tweens[1].speed then
-        actor.tweens[1].credit.y = actor.tweens[1].credit.y + actor.tweens[1].speed; running = true
-    end
-
-    if (actor.tweens[1].credit.w - actor.tweens[1].target.w) > actor.tweens[1].speed then
-        actor.tweens[1].credit.w = actor.tweens[1].credit.w - actor.tweens[1].speed; running = true
-    elseif (actor.tweens[1].credit.w - actor.tweens[1].target.w) < -actor.tweens[1].speed then
-        actor.tweens[1].credit.w = actor.tweens[1].credit.w + actor.tweens[1].speed; running = true
-    end
-
-    if (actor.tweens[1].credit.h - actor.tweens[1].target.h) > actor.tweens[1].speed then
-        actor.tweens[1].credit.h = actor.tweens[1].credit.h - actor.tweens[1].speed; running = true
-    elseif (actor.tweens[1].credit.h - actor.tweens[1].target.h) < -actor.tweens[1].speed then
-        actor.tweens[1].credit.h = actor.tweens[1].credit.h + actor.tweens[1].speed; running = true
-    end
-
-    if (actor.tweens[1].credit.r - actor.tweens[1].target.r) > actor.tweens[1].speed then
-        actor.tweens[1].credit.r = actor.tweens[1].credit.r - actor.tweens[1].speed; running = true
-    elseif (actor.tweens[1].credit.r - actor.tweens[1].target.r) < -actor.tweens[1].speed then
-        actor.tweens[1].credit.r = actor.tweens[1].credit.r + actor.tweens[1].speed; running = true
-    end
-
-    if (actor.tweens[1].credit.g - actor.tweens[1].target.g) > actor.tweens[1].speed then
-        actor.tweens[1].credit.g = actor.tweens[1].credit.g - actor.tweens[1].speed; running = true
-    elseif (actor.tweens[1].credit.g - actor.tweens[1].target.g) < -actor.tweens[1].speed then
-        actor.tweens[1].credit.g = actor.tweens[1].credit.g + actor.tweens[1].speed; running = true
-    end
-
-    if (actor.tweens[1].credit.b - actor.tweens[1].target.b) > actor.tweens[1].speed then
-        actor.tweens[1].credit.b = actor.tweens[1].credit.b - actor.tweens[1].speed; running = true
-    elseif (actor.tweens[1].credit.b - actor.tweens[1].target.b) < -actor.tweens[1].speed then
-        actor.tweens[1].credit.b = actor.tweens[1].credit.b + actor.tweens[1].speed; running = true
-    end
-
-    if (actor.tweens[1].credit.a - actor.tweens[1].target.a) > actor.tweens[1].speed then
-        actor.tweens[1].credit.a = actor.tweens[1].credit.a - actor.tweens[1].speed; running = true
-    elseif (actor.tweens[1].credit.a - actor.tweens[1].target.a) < -actor.tweens[1].speed then
-        actor.tweens[1].credit.a = actor.tweens[1].credit.a + actor.tweens[1].speed; running = true
-    end
-
-    if running == false then
-        actor.render = actor.tweens[1].credit
-        table.remove(actor.tweens, 1)
-        if #actor.tweens > 0 then
-            actor.tweens[1].credit = actor.render
+    if not (actor.tweens[1] == nil) then
+        local running = false
+        for k, v in pairs(actor.tweens[1].credit) do
+            local x = (v - actor.tweens[1].target[k]) / EASING
+            if (x > -EASING_THRESHOLD) and (x < EASING_THRESHOLD) then
+                x = (v - actor.tweens[1].target[k])
+            end
+            if not(x == 0) then
+                running = true
+                actor.tweens[1].credit[k] = v - x
+            end
+        end
+        if running == false then
+            actor.render = actor.tweens[1].credit
+            table.remove(actor.tweens, 1)
+            if #actor.tweens > 0 then
+                actor.tweens[1].credit = actor.render
+            end
         end
     end
 end
@@ -135,41 +98,40 @@ end
 local function actor_render(actor)
     if not (actor.tweens[1] == nil) then
         set_color(
-            actor.tweens[1].credit.r,
-            actor.tweens[1].credit.g,
-            actor.tweens[1].credit.b,
-            actor.tweens[1].credit.a
+            math.floor(actor.tweens[1].credit.r),
+            math.floor(actor.tweens[1].credit.g),
+            math.floor(actor.tweens[1].credit.b),
+            math.floor(actor.tweens[1].credit.a)
         )
         fill_rect(
-            actor.tweens[1].credit.x,
-            actor.tweens[1].credit.y,
-            actor.tweens[1].credit.w,
-            actor.tweens[1].credit.h
+            math.floor(actor.tweens[1].credit.x),
+            math.floor(actor.tweens[1].credit.y),
+            math.floor(actor.tweens[1].credit.w),
+            math.floor(actor.tweens[1].credit.h)
         )
     else
         set_color(
-            actor.render.r,
-            actor.render.g,
-            actor.render.b,
-            actor.render.a
+            math.floor(actor.render.r),
+            math.floor(actor.render.g),
+            math.floor(actor.render.b),
+            math.floor(actor.render.a)
         )
         fill_rect(
-            actor.render.x,
-            actor.render.y,
-            actor.render.w,
-            actor.render.h
+            math.floor(actor.render.x),
+            math.floor(actor.render.y),
+            math.floor(actor.render.w),
+            math.floor(actor.render.h)
         )
     end
 end
 
-
 function main()
     local actor = init_actor(10, 10, 50, 50, COLOR.RED)
 
-    actor_add_tween(actor, 500, 400, 70, 40, COLOR.VIOLETTE)
-    actor_add_tween(actor, 40, 110, 100, 100, COLOR.BLUE)
-    actor_add_tween(actor, 500, 400, 70, 40, COLOR.VIOLETTE)
-    actor_add_tween(actor, 40, 110, 100, 100, COLOR.BLUE)
+    actor_add_tween(actor, SCREEN_WIDTH-70, SCREEN_HEIGHT-40, 70, 40, COLOR.VIOLETTE)
+    actor_add_tween(actor, 0, SCREEN_HEIGHT-200, 100, 200, COLOR.GREEN)
+    actor_add_tween(actor, SCREEN_WIDTH-200, 0, 200, 30, COLOR.YELLOW)
+    actor_add_tween(actor, 0, 0, 100, 100, COLOR.BLUE)
 
     set_background(255, 255, 255, 255)
 
