@@ -56,7 +56,7 @@ local function init_tween(credit, target)
     local Tween = {
         credit= {x=0, y=0, w=0, h=0, r=0, g=0, b=0, a=0},
         target= {x=0, y=0, w=0, h=0, r=0, g=0, b=0, a=0},
-        speed = 4
+        easing = EASING
     }
     if not(credit==nil) then
         Tween.credit = credit
@@ -76,7 +76,7 @@ local function tween_logic(actor)
     if not (actor.tweens[1] == nil) then
         local running = false
         for k, v in pairs(actor.tweens[1].credit) do
-            local x = (v - actor.tweens[1].target[k]) / EASING
+            local x = (v - actor.tweens[1].target[k]) / actor.tweens[1].easing
             if (x > -EASING_THRESHOLD) and (x < EASING_THRESHOLD) then
                 x = (v - actor.tweens[1].target[k])
             end
