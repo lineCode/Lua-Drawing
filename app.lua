@@ -28,8 +28,7 @@ COLORS_RGB = {
      {40,40,40,255,254},-- black
      {196,196,196,254}, -- grau
 }
-
-local function parse(x, y, w, h, color)
+local function parse_actor_data(x, y, w, h, color)
     local result = {x=0, y=0, w=0, h=0, r=0, g=0, b=0, a=0}
     if not(x==nil) then result.x = x end
     if not(y==nil) then result.y = y end
@@ -45,8 +44,8 @@ end
 local function init_actor(x, y, w, h, color)
     local Actor = {
         id = 0,
-        color = GRAY,
-        render = parse(x, y, w, h, color),
+        color = color,
+        render = parse_actor_data(x, y, w, h, color),
         tweens = {}
     }
     return Actor
@@ -68,7 +67,10 @@ local function init_tween(credit, target)
 end
 
 local function actor_add_tween(actor, x, y, w, h, color)
-    local tween = init_tween(actor.render, parse(x, y, w, h, color))
+    local tween = init_tween(
+        actor.render,
+        parse_actor_data(x, y, w, h, color)
+    )
     table.insert(actor.tweens, tween)
 end
 
@@ -85,8 +87,8 @@ local function tween_logic(actor)
                 actor.tweens[1].credit[k] = v - x
             end
         end
+        actor.render = actor.tweens[1].credit
         if running == false then
-            actor.render = actor.tweens[1].credit
             table.remove(actor.tweens, 1)
             if #actor.tweens > 0 then
                 actor.tweens[1].credit = actor.render
@@ -96,33 +98,18 @@ local function tween_logic(actor)
 end
 
 local function actor_render(actor)
-    if not (actor.tweens[1] == nil) then
-        set_color(
-            math.floor(actor.tweens[1].credit.r),
-            math.floor(actor.tweens[1].credit.g),
-            math.floor(actor.tweens[1].credit.b),
-            math.floor(actor.tweens[1].credit.a)
-        )
-        fill_rect(
-            math.floor(actor.tweens[1].credit.x),
-            math.floor(actor.tweens[1].credit.y),
-            math.floor(actor.tweens[1].credit.w),
-            math.floor(actor.tweens[1].credit.h)
-        )
-    else
-        set_color(
-            math.floor(actor.render.r),
-            math.floor(actor.render.g),
-            math.floor(actor.render.b),
-            math.floor(actor.render.a)
-        )
-        fill_rect(
-            math.floor(actor.render.x),
-            math.floor(actor.render.y),
-            math.floor(actor.render.w),
-            math.floor(actor.render.h)
-        )
-    end
+    set_color(
+        math.floor(actor.render.r),
+        math.floor(actor.render.g),
+        math.floor(actor.render.b),
+        math.floor(actor.render.a)
+    )
+    fill_rect(
+        math.floor(actor.render.x),
+        math.floor(actor.render.y),
+        math.floor(actor.render.w),
+        math.floor(actor.render.h)
+    )
 end
 
 function main()
